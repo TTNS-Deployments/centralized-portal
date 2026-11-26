@@ -22,31 +22,31 @@ Open `index.html` in a browser. No build step is needed.
 Open Azure Cloud Shell in **Bash** mode and paste:
 
 ```bash
-cd ~ && (git clone https://github.com/TTNS-Deployments/centralized-portal.git 2>/dev/null || true) && cd ~/centralized-portal && git pull && bash Deployment/scripts/deploy.sh
+cd ~ && (git clone https://github.com/TTNS-Deployments/centralized-portal.git 2>/dev/null || true) && cd ~/centralized-portal && git pull && bash Deployment/scripts/deploy.sh -e demo
 ```
 
 Run the same command again whenever you push changes. It is safe to rerun.
 
+Settings live in `Deployment/environments/demo.env` (resource group, region, naming, shared plan, repo).
+
 What the script does (`Deployment/scripts/deploy.sh`):
-1. Finds the B1 Linux App Service plan used by `ccai-demo-gqausd-web` in resource group `Vaibhav.Chaudhary`.
-2. Creates the web app `morpheus-portal-<6 characters>` on that plan if it doesn't exist yet, using the newest Node LTS runtime.
-3. Points the app at the latest commit on `main`. On every start, the app downloads `index.html` from GitHub for that commit and serves it with pm2.
-4. Restarts the app, waits until it serves the new page, and prints the URL.
+1. Finds the shared B1 Linux plan `ccai-demo-gqausd-web-plan` in resource group `Vaibhav.Chaudhary`.
+2. Works out the name using the same convention as the demo apps: `<prefix>-<env>-<suffix>-web`, where suffix = `take(uniqueString(resourceGroup().id, prefix, env), 6)`, calculated by ARM. For this portal, that gives `portal-demo-<suffix>-web`.
+3. Creates that web app on the shared plan if it doesn't exist yet. It uses the newest Node LTS runtime and adds the tags `solution=centralized-portal` and `environment=demo`.
+4. Points the app at the latest commit on `main`. On every start, the app downloads `index.html` from GitHub for that commit and serves it with pm2.
+5. Restarts the app, waits until it serves the new page, and prints the URL.
 
 It uses only Azure management API calls, because zip deploy, Kudu and publish profiles don't work from this Cloud Shell. It never changes the shared plan or the demo apps.
 
-Optional overrides: `APP_NAME=<name>`, `RESOURCE_GROUP=<rg>`, `BRANCH=<branch>`, for example:
-
-```bash
-APP_NAME=my-portal bash Deployment/scripts/deploy.sh
-```
+Options: `-e <env>` (reads `Deployment/environments/<env>.env`), `--app-name <name>` (overrides the generated name), `--branch <branch>`.
 
 ### Hosting summary
 
 | Setting | Value |
 |---|---|
 | Service | Azure App Service (Linux), shared B1 plan `ccai-demo-gqausd-web-plan`, Central India |
-| Web app | `morpheus-portal-<suffix>` (the script prints the exact name and URL) |
+| Web app | `portal-demo-<suffix>-web` (the script prints the exact name and URL) |
+| Tags | `solution=centralized-portal`, `environment=demo` |
 | Runtime | Node LTS, used only to serve the static file through `pm2 serve` |
 | Code source | `PORTAL_SOURCE_URL` app setting: raw GitHub URL of `index.html`, pinned to a commit |
 
