@@ -1,0 +1,17 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build output
+dist/
+
+# Secrets — never commit these
+*.PublishSettings
+*.publishsettings
+.env
+.env.*
+
+# Claude Code local settings
+.claude/settings.local.json
